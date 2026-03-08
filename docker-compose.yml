@@ -1,0 +1,42 @@
+services:
+  opcplc:
+    image: mcr.microsoft.com/iotedge/opc-plc:latest
+    container_name: opcplc
+    ports:
+      - "${OPCUA_SERVER_PORT}:${OPCUA_SERVER_PORT}"
+      - "8080:8080"
+    volumes:
+      - ./config/:/config/
+    command: >
+      --pn=${OPCUA_SERVER_PORT}
+      --autoaccept
+      --sph
+      --sn=5
+      --sr=10
+      --st=uint
+      --fn=5
+      --fr=1
+      --ft=uint
+      --gn=5
+      --nodesfile /config/nodesfile.json
+    restart: unless-stopped
+
+  opcua-simulator:
+    container_name: opcua-simulator
+    volumes:
+      - ./config/:/config/
+    restart: always
+    build:
+      dockerfile: Dockerfile
+    depends_on:
+      - opcplc
+    command:
+      - ./opcua-simulator
+      - --endpoint
+      - opc.tcp://opcplc:${OPCUA_SERVER_PORT}
+      - --node
+      - ${OPCUA_SIMULATOR_NODE}
+      - --cert
+      - /config/certs/opcua/cert.pem
+      - --key
+      - /config/certs/opcua/key.pem
