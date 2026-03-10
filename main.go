@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 )
 
 // simulate runs the simulation loop, listening for simulated points and printing them until the context is canceled.
@@ -33,6 +34,7 @@ func main() {
 	nodeID := flag.String("node", "i=84", "node id")
 	certPath := flag.String("cert", "", "path to TLS certificate")
 	keyPath := flag.String("key", "", "path to TLS private key")
+	stepMs := flag.Int("step", 0, "simulation step in milliseconds")
 
 	flag.Parse()
 
@@ -69,6 +71,10 @@ func main() {
 
 	sim := simulator.NewSimulator(&wg)
 
+	if *stepMs > 10 {
+		sim.WithStepMs(time.Duration(*stepMs))
+	}
+
 	for _, node := range nodes {
 		if node.DataType == "Float" {
 			sim.AddPoint(
@@ -78,7 +84,7 @@ func main() {
 					Step:     0.01,
 					Max:      50,
 					Shift:    70,
-					Time:     rand.Float64(),
+					Time:     rand.Float64() * 2,
 				},
 			)
 		} else if node.DataType == "String" {
@@ -86,8 +92,8 @@ func main() {
 				node.NodeID,
 				simulator.Config{
 					Function: simulator.FunctionSelect,
-					Values:   []any{"INNE", "UTE"},
-					Step:     0.001,
+					Values:   []any{"INNE", "UTE", "InvalidState"},
+					Step:     0.1,
 					Max:      100,
 					Time:     rand.Float64(),
 				},
@@ -107,6 +113,6 @@ func main() {
 
 	sim.RunAsync(ctx)
 
-	log.Printf("Simulation started. Press Ctrl+C to stop\n")
+	log.Printf("Simulation started with step %d. Press Ctrl+C to stop\n", sim.GetStepMs())
 	wg.Wait()
 }

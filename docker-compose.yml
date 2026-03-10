@@ -25,7 +25,7 @@ services:
     container_name: opcua-simulator
     volumes:
       - ./config/:/config/
-    restart: always
+    restart: unless-stopped
     build:
       dockerfile: Dockerfile
     depends_on:
@@ -34,6 +34,8 @@ services:
       - ./opcua-simulator
       - --endpoint
       - opc.tcp://opcplc:${OPCUA_SERVER_PORT}
+      - --step
+      - ${OPCUA_SIMULATROR_STEP_MS}
       - --node
       - ${OPCUA_SIMULATOR_NODE}
       - --cert

@@ -56,6 +56,17 @@ func NewSimulator(wg *sync.WaitGroup) *Simulator {
 	}
 }
 
+// WithStepMs sets the step duration for the simulator
+func (s *Simulator) WithStepMs(stepMs time.Duration) *Simulator {
+	s.stepMs = stepMs
+	return s
+}
+
+// GetStepMs returns the current step duration of the simulator
+func (s *Simulator) GetStepMs() time.Duration {
+	return s.stepMs
+}
+
 // Simulated returns a channel that can be used to receive simulated points
 func (s *Simulator) Simulated() <-chan SimulatedPoint {
 	return s.output
@@ -103,7 +114,7 @@ func (p *Point) step() *Point {
 	case FunctionSelect:
 		// Select a value from the values slice based on time and step
 		if len(p.config.Values) > 0 {
-			index := int(p.config.Time/p.config.Step) % len(p.config.Values)
+			index := int(p.config.Time) % len(p.config.Values)
 			p.Value = p.config.Values[index]
 			p.config.Time += p.config.Step
 		}
@@ -124,14 +135,13 @@ func (s *Simulator) step() {
 func (s *Simulator) Simulate(ctx context.Context) {
 	ticker := time.NewTicker(s.stepMs * time.Millisecond) // Adjust the tick duration as needed
 	defer ticker.Stop()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			s.step()
 			for key, point := range s.points {
+				s.points[key] = point.step()
 				s.output <- SimulatedPoint{
 					Key:   key,
 					Value: point.Value,

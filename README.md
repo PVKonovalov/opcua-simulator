@@ -57,6 +57,7 @@ Create a `.env` file in project root (example):
 ```env
 OPCUA_SERVER_PORT=4840
 OPCUA_SIMULATOR_NODE=ns=3;s=OpcPlc
+OPCUA_SIMULATROR_STEP_MS=1000
 ```
 
 Start stack:
